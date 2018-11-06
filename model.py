@@ -10,7 +10,6 @@ class EncoderCNN(nn.Module):
         for param in resnet.parameters():
             param.requires_grad_(False)
         
-        # TODO: consider adding BatchNorm to the ResNet
         modules = list(resnet.children())[:-1]
         self.resnet = nn.Sequential(*modules)
         self.image_embed = nn.Linear(resnet.fc.in_features, embed_size)
@@ -40,8 +39,6 @@ class DecoderRNN(nn.Module):
         # NOTE: batch_first must be set to handle a standard batch order of [batch, seq, embed]; 
         self.lstm = nn.LSTM(embed_size, hidden_size, num_layers, batch_first = True, dropout = 0.4)
 
-#        self.dropout = nn.Dropout(0.4)
-        
         # Predict probability distribution over entire vocabulary
         self.word_likelihood = nn.Linear(hidden_size, vocab_size)
         
@@ -90,11 +87,9 @@ class DecoderRNN(nn.Module):
         # throws error "Trying to backward through the graph a second time, but the buffers have already been freed"
         outputs, _ = self.lstm(embeddings)
         
-#        outputs = self.dropout(outputs)
-        
         probabilities = self.word_likelihood(outputs)
 
-        # HACK: trim the first element because assignment code asserts(length = caption_length)
+        # HACK: trim the first element because Udacity grader code asserts(length = caption_length)
         # this is gross for training because .contiguous() does a big memcpy
         probabilities = probabilities[:, 0:-1, :].contiguous()
         
