@@ -3,6 +3,6 @@ Demonstration of photo captioning using neural nets (encoder/decoder similar to 
 
 Captions MS-COCO images pretty well (what the model was trained on) but leaves something to be desired with random snapshots:
 
-![Screenshot](screenshots/photo_captioning.jpeg)
-
 ![Screenshot](screenshots/screenshot.jpg)
+
+![Screenshot](screenshots/photo_captioning.jpeg)
