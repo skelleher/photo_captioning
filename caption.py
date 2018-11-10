@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import sys
 import argparse
@@ -5,24 +6,44 @@ import requests
 import io
 import numpy as np
 import torch
+import time
 from PIL import Image
 from torchvision import transforms
 from pycocotools.coco import COCO
 from vocabulary import Vocabulary
 from model import EncoderCNN, DecoderRNN
 from flask import Flask, jsonify, request, _app_ctx_stack
+from flask_restful import Resource, Api
 
 # Flask web server
-_app   = Flask(__name__)
+_app   = None
+_api   = None
 _index = None
 _args  = None
+
+# REST resources
+
+# Given an input image (.png or .jpeg) generate a caption
+class ImageCaptionResource(Resource):
+    def post(self):
+        if request.headers["Content-Type"] != "application/octet-stream":
+            return "Unsupported Media Type", 415
+
+        start = time.time()
+        image_bytes = request.data
+        image = Image.open( io.BytesIO(image_bytes) )
+        caption = _get_prediction_from_image( image )
+        stop = time.time()
+        msecs = (stop - start) * 1000
+        print("%d ms: %s bytes -> %d" % (msecs, request.headers["Content-Length"], len(caption)))
+    
+        return jsonify(caption)
+ 
 
 
 # Models pre-trained on MS-COCO:
 #   encoder (Resnet + embedding layers)
 #   decoder (LSTM)  
-#_encoder_file = "encoder-3-1.6110.pkl" 
-#_decoder_file = "decoder-3-1.6110.pkl" 
 _encoder_file = "encoder.pkl"
 _decoder_file = "decoder.pkl"
 
@@ -39,9 +60,6 @@ _vocab   = None
 
     
 def _main():
-    # force print() to be unbuffered
-#    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w')
-   
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="(optional) path to photograph, for which a caption will be generated", nargs = "?")
     parser.add_argument("--host", help="(optional) host to start a webserver on. Default: 0.0.0.0", nargs = "?", default = "0.0.0.0")
@@ -96,8 +114,15 @@ def _main():
         _get_prediction_from_file(_args.filename)
     else:
         global _app
-        _app.run(host = _args.host, port = _args.port)
+        global _api
 
+        _app = Flask(__name__)
+        _api = Api(_app)
+
+        _api.add_resource(ImageCaptionResource,
+                "/v1/caption",
+                "/v1/caption/")
+        _app.run(host = _args.host, port = _args.port)
 
  
 # Convert model output from tokens back into English, with white space
@@ -144,37 +169,6 @@ def _get_prediction_from_image(image):
     print(sentence)
 
     return sentence
-
-
-
-#
-# Webserver methods
-# 
-
-@_app.route("/")
-def root():
-    return "Image captioning server running. Vocab = %d words" % len(_vocab)
-
-
-@_app.route("/query", methods=["POST"])
-def query():
-    global _args
-
-    if _args.verbose:
-        print("headers =\n", request.headers)
-
-    if request.headers['Content-Type'] != 'application/octet-stream':
-        return "415 Unsupported Media Type"    
-
-    image_bytes = request.data
-    image = Image.open( io.BytesIO(image_bytes) )
-
-    if _args.verbose:
-        print("Image = %s" % image)
-
-    caption = _get_prediction_from_image( image )
-
-    return jsonify(caption)
 
 
 if __name__ == "__main__":

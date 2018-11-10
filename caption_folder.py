@@ -20,7 +20,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="folder or file to query.  Will be captioned recursively")
     parser.add_argument("--host", help="hostname of query server", nargs="?", default="localhost")
-    parser.add_argument("--port", help="port of query server", nargs="?", type=int, default=1975)
+    parser.add_argument("--port", help="port of query server", nargs="?", type=int, default=1985)
     parser.add_argument("--show", help="show query results in a popup window", action="store_true")
 
     global _args
@@ -96,7 +96,7 @@ def _caption_folder(input_path, args):
 
 
 def _caption_file(input_path, args):
-    url = "http://%s:%d/query" % (args.host, args.port)
+    url = "http://%s:%d/v1/caption" % (args.host, args.port)
     headers = { "content-type" : "application/octet-stream" }
 
     try:
