@@ -96,16 +96,19 @@ def _main():
     # Load pre-trained models: 
     # encoder (Resnet + embedding layers)
     # decoder (LSTM)
-    print("Loading models...")
     global _encoder
     global _decoder
+    encoder_path = os.path.join("./models/", _encoder_file)
+    decoder_path = os.path.join("./models/", _decoder_file)
+    print("Loading ", encoder_path)
     _encoder = EncoderCNN(_embed_size)
-    _encoder.load_state_dict(torch.load(os.path.join('./models', _encoder_file)))
+    _encoder.load_state_dict(torch.load(encoder_path))
     _encoder.eval()
     _encoder.to(_device)
 
+    print("Loading ", decoder_path)
     _decoder = DecoderRNN(_embed_size, _hidden_size, vocab_size, _num_layers)
-    _decoder.load_state_dict(torch.load(os.path.join('./models', _decoder_file)))
+    _decoder.load_state_dict(torch.load(decoder_path))
     _decoder.eval()
     _decoder.to(_device)
 
