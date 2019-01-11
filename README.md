@@ -5,4 +5,3 @@ Captions MS-COCO images pretty well (what the model was trained on) but leaves s
 
 ![Screenshot](screenshots/screenshot.jpg)
 
-![Screenshot](screenshots/photo_captioning.jpeg)
